@@ -1,5 +1,3 @@
-End Class
-
     Public NotInheritable Class LongTimer : Implements IDisposable
         Private Const MAXTIME As Int64 = UInt32.MaxValue - 1
         Private Const EPSILON As Int64 = 15
@@ -165,3 +163,5 @@ Finish:
             MyBase.Finalize()
         End Sub
 #End Region
+
+    End Class
