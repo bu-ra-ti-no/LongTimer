@@ -9,9 +9,9 @@ Private Shared ReadOnly timerBeginCallbackDelegate As Threading.TimerCallback = 
 
 . . .
 
-TimerBegin = New LongTimer(timerBeginCallbackDelegate, startDate, State:=Me)
+timerBegin = New LongTimer(timerBeginCallbackDelegate, startDate, State:=Me)
 . . . 
-TimerBegin.Change(New Date(2016, 8, 11, 15, 0, 0))
+timerBegin.Change(New Date(2016, 8, 11, 15, 0, 0))
 ```
 ***
 **C\#**
@@ -20,7 +20,7 @@ private static readonly System.Threading.TimerCallback timerBeginCallbackDelegat
 
 . . .
 
-TimerBegin = new LongTimer(TimerBeginCallbackDelegate, startDate, this);
+timerBegin = new LongTimer(timerBeginCallbackDelegate, startDate, this);
 . . . 
-TimerBegin.Change(new System.DateTime(2016, 8, 11, 15, 0, 0));
+timerBegin.Change(new System.DateTime(2016, 8, 11, 15, 0, 0));
 ```
