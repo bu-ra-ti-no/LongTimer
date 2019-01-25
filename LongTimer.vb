@@ -1,41 +1,42 @@
     Public NotInheritable Class LongTimer : Implements IDisposable
-        Private Const MAXTIME As Long = UInteger.MaxValue - 1
-        Private Const EPSILON As Long = 15
-        Private Const RATIO As Double = 0.8
+        Private Const MAXTIME = UInteger.MaxValue - 1L
+        Private Const EPSILON = 15L
+        Private Const RATIO = 0.8
         Private _timer As Timer
         Private _callback As TimerCallback
         Private ReadOnly _innerCallback As TimerCallback = AddressOf InnerCallback
         Private _state As Object
         Private _needDispose As Boolean
 
-        <DebuggerBrowsable(DebuggerBrowsableState.Never)> _
-        Private x As Date
-        Private isSimple As Boolean
+        <DebuggerBrowsable(DebuggerBrowsableState.Never)>
+        Private _x As Date
+        Private _isSimple As Boolean
 
         Public ReadOnly Property [Date]() As Date
-            <DebuggerStepThrough()> _
+            <DebuggerStepThrough()>
             Get
-                Return x
+                Return _x
             End Get
         End Property
 
-        Public Sub New(ByVal callback As TimerCallback, ByVal [date] As Date, Optional ByVal state As Object = Nothing)
-            x = [date]
+        Public Sub New(callback As TimerCallback, [date] As Date, Optional state As Object = Nothing)
+            _x = [date]
+            If _x.Kind <> DateTimeKind.Utc Then _x = _x.ToUniversalTime
             _callback = callback
             _state = state
             InnerCallback(_state)
         End Sub
 
-        Public Sub New(ByVal callback As TimerCallback, ByVal interval As Long, Optional ByVal state As Object = Nothing)
-            x = Date.Now.Add(TimeSpan.FromTicks(interval * 10000L))
+        Public Sub New(callback As TimerCallback, interval As Long, Optional state As Object = Nothing)
+            _x = Date.UtcNow.Add(TimeSpan.FromTicks(interval * 10000L))
             _callback = callback
             _state = state
             InnerCallback(_state)
         End Sub
 
-        Private Sub InnerCallback(ByVal state As Object)
+        Private Sub InnerCallback(state As Object)
             'Debug.Print("InnerCallback")
-            If isSimple Then
+            If _isSimple
 Finish:
                 _needDispose = True
                 Try
@@ -44,14 +45,14 @@ Finish:
                     If _needDispose Then Dispose()
                 End Try
             Else
-                Dim dueTime = (x - Date.Now).Ticks \ 10000L
-                If dueTime <= EPSILON Then
+                Dim dueTime = (_x - Date.UtcNow).Ticks \ 10000L
+                If dueTime <= EPSILON
                     GoTo Finish
-                ElseIf dueTime <= 3600 * 1000 Then
-                    isSimple = True
+                ElseIf dueTime <= 3600 * 1000
+                    _isSimple = True
                     Dim ok As Boolean
                     Try
-                        If _timer Is Nothing Then
+                        If _timer Is Nothing
                             _timer = New Timer(_innerCallback, Me, dueTime, Timeout.Infinite)
                             ok = True
                         Else
@@ -59,16 +60,16 @@ Finish:
                         End If
                     Catch
                     End Try
-                    If Not ok Then
-                        If _timer IsNot Nothing Then
+                    If Not ok
+                        If _timer IsNot Nothing
                             Try : _timer.Dispose() : Catch : End Try
                         End If
                         _timer = New Timer(_innerCallback, Me, dueTime, Timeout.Infinite)
                     End If
-                ElseIf dueTime > MAXTIME Then
+                ElseIf dueTime > MAXTIME
                     Dim ok As Boolean
                     Try
-                        If _timer Is Nothing Then
+                        If _timer Is Nothing
                             _timer = New Timer(_innerCallback, Me, CLng(MAXTIME * RATIO), Timeout.Infinite)
                             ok = True
                         Else
@@ -76,8 +77,8 @@ Finish:
                         End If
                     Catch
                     End Try
-                    If Not ok Then
-                        If _timer IsNot Nothing Then
+                    If Not ok
+                        If _timer IsNot Nothing
                             Try : _timer.Dispose() : Catch : End Try
                         End If
                         _timer = New Timer(_innerCallback, Me, CLng(MAXTIME * RATIO), Timeout.Infinite)
@@ -85,7 +86,7 @@ Finish:
                 Else
                     Dim ok As Boolean
                     Try
-                        If _timer Is Nothing Then
+                        If _timer Is Nothing
                             _timer = New Timer(_innerCallback, Me, CLng(dueTime * RATIO), Timeout.Infinite)
                             ok = True
                         Else
@@ -93,8 +94,8 @@ Finish:
                         End If
                     Catch
                     End Try
-                    If Not ok Then
-                        If _timer IsNot Nothing Then
+                    If Not ok
+                        If _timer IsNot Nothing
                             Try : _timer.Dispose() : Catch : End Try
                         End If
                         _timer = New Timer(_innerCallback, Me, CLng(dueTime * RATIO), Timeout.Infinite)
@@ -103,22 +104,23 @@ Finish:
             End If
         End Sub
 
-        Public Sub Change(ByVal [date] As Date)
-            x = [date]
-            isSimple = False
-            If Disposed Then
-                disposedValue = False
+        Public Sub Change([date] As Date)
+            _x = [date]
+            If _x.Kind <> DateTimeKind.Utc Then _x = _x.ToUniversalTime
+            _isSimple = False
+            If Disposed
+                _disposed = False
                 GC.ReRegisterForFinalize(Me)
             End If
             _needDispose = False
             InnerCallback(_state)
         End Sub
 
-        Public Sub Change(ByVal interval As Long)
-            x = Date.Now.AddTicks(interval * 10000L)
-            isSimple = False
-            If Disposed Then
-                disposedValue = False
+        Public Sub Change(interval As Long)
+            _x = Date.UtcNow.AddTicks(interval * 10000L)
+            _isSimple = False
+            If Disposed
+                _disposed = False
                 GC.ReRegisterForFinalize(Me)
             End If
             _needDispose = False
@@ -133,23 +135,23 @@ Finish:
 
 #Region " IDisposable Support "
         Public ReadOnly Property Disposed() As Boolean
-            <DebuggerStepThrough()> _
+            <DebuggerStepThrough()>
             Get
-                Return disposedValue
+                Return _disposed
             End Get
         End Property
 
-        <DebuggerBrowsable(DebuggerBrowsableState.Never)> _
-        Private disposedValue As Boolean
+        <DebuggerBrowsable(DebuggerBrowsableState.Never)>
+        Private _disposed As Boolean
 
-        Protected Sub Dispose(ByVal disposing As Boolean)
-            If Not disposedValue Then
+        Protected Sub Dispose(disposing As Boolean)
+            If Not _disposed
                 If _timer IsNot Nothing Then _timer.Dispose() : _timer = Nothing
-                If Not disposing Then
+                If Not disposing
                     _callback = Nothing
                     _state = Nothing
                 End If
-                disposedValue = True
+                _disposed = True
             End If
         End Sub
 
